@@ -53,7 +53,6 @@ frontyard_collisions = [
 ]
 
 
-
 # Door trigger area 
 door_to_livingroom = pygame.Rect(30, 42, 76, 113)
 door_to_bedroom = pygame.Rect(403, 325, 76, 37)
@@ -63,11 +62,6 @@ door_back_in_house = pygame.Rect(199, 127, 100, 158)
 
 # Event tigger area
 unlock_key = pygame.Rect(365, 431, 46, 45)
-
-# --- Track current room ---
-game_state = "bedroom"
-background = pygame.image.load('Images/bedroom.png')
-collisions = bedroom_collisions
 
 
 # --- Dialogue flag ---
@@ -217,29 +211,86 @@ def redrawGameWindow():
     elif game_state == "frontyard":
         pygame.draw.rect(win, (0, 255, 0), door_back_in_house, 2)
         pygame.draw.rect(win, (0, 255, 0), unlock_key, 2)
-
-
     student.draw(win)
     pygame.display.update()
 
+
+def draw_start_menu():
+    win.blit(start_bg, (0, 0))
+    # Title
+    win.blit(
+        title_text,
+        (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 6)
+    )
+    # Button hover
+    mouse_pos = pygame.mouse.get_pos()
+    color = BUTTON_HOVER if start_button.collidepoint(mouse_pos) else BUTTON_COLOR
+    pygame.draw.rect(win, color, start_button, border_radius=10)
+    text = button_font.render("Start", True, (255, 255, 255))
+    win.blit(
+        text,
+        (
+            start_button.centerx - text.get_width() // 2,
+            start_button.centery - text.get_height() // 2
+        )
+    )
+    pygame.display.update()
 
 
 # ------------------------------------------------------------------------------------
 # MAIN LOOP
 # ------------------------------------------------------------------------------------
+# --- START SCREEN ASSETS ---
+start_bg = pygame.image.load("Images/startmenu.png")
+start_bg = pygame.transform.scale(start_bg, (WIDTH, HEIGHT))
+
+title_font = pygame.font.SysFont("Arial", 64)
+button_font = pygame.font.SysFont("Arial", 32)
+
+title_text = title_font.render("Race to University", True, (0, 0, 0))
+
+button_width, button_height = 200, 60
+button_x = WIDTH // 2 - button_width // 2
+button_y = HEIGHT // 1.5
+start_button = pygame.Rect(button_x, button_y, button_width, button_height)
+
+BUTTON_COLOR = (50, 200, 50)
+BUTTON_HOVER = (80, 255, 80)
+game_state = "start_menu"
+run = True
+
+# --- START MENU BUTTON ---
+button_width, button_height = 200, 60
+button_x = WIDTH // 2 - button_width // 2
+button_y = HEIGHT // 1.5
+start_button = pygame.Rect(button_x, button_y, button_width, button_height)
+
+BUTTON_COLOR = (50, 200, 50)
+BUTTON_HOVER = (80, 255, 80)
+
+can_interact = True
 student = Player(350, 177, 96, 96)
 run = True
 items_chosen = False
 unlock_bycle = False
 while run:
     clock.tick(30)
-
+    # ================== EVENTS ==================
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
 
+        # -------- START MENU --------
+        elif game_state == "start_menu":
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if start_button.collidepoint(event.pos):
+                    game_state = "bedroom"
+                    background = pygame.image.load("Images/bedroom.png")
+                    collisions = bedroom_collisions
+                    student.x, student.y = 350, 177
+
         # ---------------- ITEM SELECTION ----------------
-        if game_state == "item_select":
+        elif game_state == "item_select":
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_DOWN:
                     current_index = (current_index + 1) % len(available_items)
@@ -361,20 +412,24 @@ while run:
     # =====================================================
 
     # SPECIAL MENUS MUST DRAW BEFORE BACKGROUND OVERWRITE
-    if game_state == "item_select":
+    if game_state == "start_menu":
+        draw_start_menu()
+        continue
+
+    elif game_state == "item_select":
         draw_item_menu()
         pygame.display.update()
-        continue     # IMPORTANT!
+        continue
 
     elif game_state == "item_confirm":
         draw_text_box(win, f"You selected: {selected_items[0]}, {selected_items[1]}\nPress ENTER to continue.", font)
         pygame.display.update()
-        continue     # IMPORTANT!
+        continue
 
     elif game_state == "item_use":
         draw_selected_item_menu(win, font, selected_items, unlock_index)
         pygame.display.update()
-        continue     # IMPORTANT!
+        continue
 
     # NORMAL ROOM RENDER
     win.blit(background, (0, 0))
